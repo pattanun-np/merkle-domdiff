@@ -1,0 +1,47 @@
+[
+  {
+    "version_a": "v75",
+    "version_b": "v83",
+    "difference_percent": 27.27272727272727,
+    "total_chunks_a": 10,
+    "total_chunks_b": 9,
+    "common_chunks": 8,
+    "different_chunks": 3
+  },
+  {
+    "version_a": "v57",
+    "version_b": "v79",
+    "difference_percent": 0.0,
+    "total_chunks_a": 9,
+    "total_chunks_b": 9,
+    "common_chunks": 9,
+    "different_chunks": 0
+  },
+  {
+    "version_a": "v99",
+    "version_b": "v70",
+    "difference_percent": 0.0,
+    "total_chunks_a": 9,
+    "total_chunks_b": 9,
+    "common_chunks": 9,
+    "different_chunks": 0
+  },
+  {
+    "version_a": "v8",
+    "version_b": "v77",
+    "difference_percent": 0.0,
+    "total_chunks_a": 9,
+    "total_chunks_b": 9,
+    "common_chunks": 9,
+    "different_chunks": 0
+  },
+  {
+    "version_a": "v48",
+    "version_b": "v4",
+    "difference_percent": 61.53846153846154,
+    "total_chunks_a": 9,
+    "total_chunks_b": 9,
+    "common_chunks": 5,
+    "different_chunks": 8
+  }
+]
