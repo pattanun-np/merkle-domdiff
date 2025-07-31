@@ -1,0 +1,90 @@
+[
+  {
+    "method": "merkle_lite",
+    "chunk_size": 1,
+    "num_tests": 500,
+    "avg_time_ms": 0.024,
+    "min_time_ms": 0,
+    "max_time_ms": 4,
+    "total_time_ms": 290,
+    "memory_usage_bytes": 5095424,
+    "throughput_comparisons_per_sec": 1724.1379310344828
+  },
+  {
+    "method": "merkle_tree",
+    "chunk_size": 1,
+    "num_tests": 500,
+    "avg_time_ms": 0.08,
+    "min_time_ms": 0,
+    "max_time_ms": 2,
+    "total_time_ms": 403,
+    "memory_usage_bytes": 966656,
+    "throughput_comparisons_per_sec": 1240.6947890818858
+  },
+  {
+    "method": "merkle_lite",
+    "chunk_size": 2,
+    "num_tests": 500,
+    "avg_time_ms": 0.02,
+    "min_time_ms": 0,
+    "max_time_ms": 3,
+    "total_time_ms": 223,
+    "memory_usage_bytes": 49152,
+    "throughput_comparisons_per_sec": 2242.152466367713
+  },
+  {
+    "method": "merkle_tree",
+    "chunk_size": 2,
+    "num_tests": 500,
+    "avg_time_ms": 0.118,
+    "min_time_ms": 0,
+    "max_time_ms": 9,
+    "total_time_ms": 356,
+    "memory_usage_bytes": 950272,
+    "throughput_comparisons_per_sec": 1404.4943820224719
+  },
+  {
+    "method": "merkle_lite",
+    "chunk_size": 3,
+    "num_tests": 500,
+    "avg_time_ms": 0.002,
+    "min_time_ms": 0,
+    "max_time_ms": 1,
+    "total_time_ms": 223,
+    "memory_usage_bytes": 65536,
+    "throughput_comparisons_per_sec": 2242.152466367713
+  },
+  {
+    "method": "merkle_tree",
+    "chunk_size": 3,
+    "num_tests": 500,
+    "avg_time_ms": 0.004,
+    "min_time_ms": 0,
+    "max_time_ms": 1,
+    "total_time_ms": 227,
+    "memory_usage_bytes": 65536,
+    "throughput_comparisons_per_sec": 2202.643171806167
+  },
+  {
+    "method": "merkle_lite",
+    "chunk_size": 5,
+    "num_tests": 500,
+    "avg_time_ms": 0.002,
+    "min_time_ms": 0,
+    "max_time_ms": 1,
+    "total_time_ms": 177,
+    "memory_usage_bytes": 0,
+    "throughput_comparisons_per_sec": 2824.858757062147
+  },
+  {
+    "method": "merkle_tree",
+    "chunk_size": 5,
+    "num_tests": 500,
+    "avg_time_ms": 0.0,
+    "min_time_ms": 0,
+    "max_time_ms": 0,
+    "total_time_ms": 192,
+    "memory_usage_bytes": 0,
+    "throughput_comparisons_per_sec": 2604.1666666666665
+  }
+]
