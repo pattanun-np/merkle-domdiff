@@ -61,6 +61,8 @@ struct ComparisonResult {
     different_chunks: usize,
     method: String,
     processing_time_ms: u128,
+    processing_time_us: u128,  // microseconds
+    processing_time_ns: u128,  // nanoseconds
     line_diffs: Vec<LineDiff>,
 }
 
@@ -430,7 +432,7 @@ fn generate_line_diffs(tokens_a: &[TokenWithLine], tokens_b: &[TokenWithLine]) -
     line_diffs
 }
 
-fn compare_with_method(chunks_a: &[String], chunks_b: &[String], use_merkle_tree: bool) -> (f64, usize, usize, usize, usize, u128) {
+fn compare_with_method(chunks_a: &[String], chunks_b: &[String], use_merkle_tree: bool) -> (f64, usize, usize, usize, usize, u128, u128, u128) {
     let start = Instant::now();
     
     let (hashes_a, hashes_b) = if use_merkle_tree {
@@ -440,12 +442,15 @@ fn compare_with_method(chunks_a: &[String], chunks_b: &[String], use_merkle_tree
     };
     
     let (percent, total_a, total_b, common, different) = detailed_diff(&hashes_a, &hashes_b);
-    let duration = start.elapsed().as_millis();
+    let elapsed = start.elapsed();
+    let duration_ms = elapsed.as_millis();
+    let duration_us = elapsed.as_micros();
+    let duration_ns = elapsed.as_nanos();
     
-    (percent, total_a, total_b, common, different, duration)
+    (percent, total_a, total_b, common, different, duration_ms, duration_us, duration_ns)
 }
 
-fn compare_with_line_diffs(content_a: &str, content_b: &str, chunk_size: usize, use_merkle_tree: bool) -> (f64, usize, usize, usize, usize, u128, Vec<LineDiff>) {
+fn compare_with_line_diffs(content_a: &str, content_b: &str, chunk_size: usize, use_merkle_tree: bool) -> (f64, usize, usize, usize, usize, u128, u128, u128, Vec<LineDiff>) {
     let start = Instant::now();
     
     let (chunks_a, tokens_a) = normalize_html_with_lines(content_a, chunk_size);
@@ -459,9 +464,12 @@ fn compare_with_line_diffs(content_a: &str, content_b: &str, chunk_size: usize, 
     
     let (percent, total_a, total_b, common, different) = detailed_diff(&hashes_a, &hashes_b);
     let line_diffs = generate_line_diffs(&tokens_a, &tokens_b);
-    let duration = start.elapsed().as_millis();
+    let elapsed = start.elapsed();
+    let duration_ms = elapsed.as_millis();
+    let duration_us = elapsed.as_micros();
+    let duration_ns = elapsed.as_nanos();
     
-    (percent, total_a, total_b, common, different, duration, line_diffs)
+    (percent, total_a, total_b, common, different, duration_ms, duration_us, duration_ns, line_diffs)
 }
 
 fn process_file<P: AsRef<Path>>(path: P, chunk_size: usize) -> Vec<String> {
@@ -563,13 +571,13 @@ fn generate_random_comparisons(base_content: &str, num_comparisons: usize, chunk
         let (name_a, content_a) = &versions[idx_a];
         let (name_b, content_b) = &versions[idx_b];
         
-        let (percent, total_a, total_b, common, different, duration, line_diffs) = if include_line_diffs {
+        let (percent, total_a, total_b, common, different, duration_ms, duration_us, duration_ns, line_diffs) = if include_line_diffs {
             compare_with_line_diffs(content_a, content_b, chunk_size, use_merkle_tree)
         } else {
             let chunks_a = normalize_html(content_a, chunk_size);
             let chunks_b = normalize_html(content_b, chunk_size);
-            let (p, ta, tb, c, d, dur) = compare_with_method(&chunks_a, &chunks_b, use_merkle_tree);
-            (p, ta, tb, c, d, dur, Vec::new())
+            let (p, ta, tb, c, d, dur_ms, dur_us, dur_ns) = compare_with_method(&chunks_a, &chunks_b, use_merkle_tree);
+            (p, ta, tb, c, d, dur_ms, dur_us, dur_ns, Vec::new())
         };
         
         results.push(ComparisonResult {
@@ -581,7 +589,9 @@ fn generate_random_comparisons(base_content: &str, num_comparisons: usize, chunk
             common_chunks: common,
             different_chunks: different,
             method: if use_merkle_tree { "merkle_tree".to_string() } else { "merkle_lite".to_string() },
-            processing_time_ms: duration,
+            processing_time_ms: duration_ms,
+            processing_time_us: duration_us,
+            processing_time_ns: duration_ns,
             line_diffs,
         });
     }
@@ -612,9 +622,17 @@ struct BenchmarkResult {
     chunk_size: usize,
     num_tests: usize,
     avg_time_ms: f64,
+    avg_time_us: f64,  // microseconds
+    avg_time_ns: f64,  // nanoseconds
     min_time_ms: u128,
+    min_time_us: u128,
+    min_time_ns: u128,
     max_time_ms: u128,
+    max_time_us: u128,
+    max_time_ns: u128,
     total_time_ms: u128,
+    total_time_us: u128,
+    total_time_ns: u128,
     memory_usage_bytes: usize,
     throughput_comparisons_per_sec: f64,
 }
@@ -705,24 +723,36 @@ fn run_benchmark(num_tests: usize) {
                 let (chunks_b, _) = normalize_html_with_lines(&modified_html, chunk_size);
                 
                 // Use black_box to prevent compiler optimizations
-                let (_percent, _total_a, _total_b, _common, _different, duration) = 
+                let (_percent, _total_a, _total_b, _common, _different, duration_ms, duration_us, duration_ns) = 
                     compare_with_method(
                         &black_box(chunks_a), 
                         &black_box(chunks_b), 
                         black_box(*use_merkle_tree)
                     );
                 
-                times.push(black_box(duration));
+                times.push(black_box(duration_ms));
             }
             
-            let total_duration = total_start.elapsed().as_millis();
+            let total_elapsed = total_start.elapsed();
+            let total_duration_ms = total_elapsed.as_millis();
+            let total_duration_us = total_elapsed.as_micros();
+            let total_duration_ns = total_elapsed.as_nanos();
             let memory_after = get_memory_usage();
             
-            let avg_time = times.iter().sum::<u128>() as f64 / times.len() as f64;
-            let min_time = *times.iter().min().unwrap_or(&0);
-            let max_time = *times.iter().max().unwrap_or(&0);
-            let throughput = if total_duration > 0 {
-                (num_tests as f64 * 1000.0) / total_duration as f64
+            let avg_time_ms = times.iter().sum::<u128>() as f64 / times.len() as f64;
+            let min_time_ms = *times.iter().min().unwrap_or(&0);
+            let max_time_ms = *times.iter().max().unwrap_or(&0);
+            
+            // Calculate averages for all time units
+            let avg_time_us = avg_time_ms * 1000.0;
+            let avg_time_ns = avg_time_us * 1000.0;
+            let min_time_us = min_time_ms * 1000;
+            let min_time_ns = min_time_us * 1000;
+            let max_time_us = max_time_ms * 1000;
+            let max_time_ns = max_time_us * 1000;
+            
+            let throughput = if total_duration_ms > 0 {
+                (num_tests as f64 * 1000.0) / total_duration_ms as f64
             } else {
                 0.0
             };
@@ -731,10 +761,18 @@ fn run_benchmark(num_tests: usize) {
                 method: method_name.to_string(),
                 chunk_size,
                 num_tests,
-                avg_time_ms: avg_time,
-                min_time_ms: min_time,
-                max_time_ms: max_time,
-                total_time_ms: total_duration,
+                avg_time_ms: avg_time_ms,
+                avg_time_us: avg_time_us,
+                avg_time_ns: avg_time_ns,
+                min_time_ms: min_time_ms,
+                min_time_us: min_time_us,
+                min_time_ns: min_time_ns,
+                max_time_ms: max_time_ms,
+                max_time_us: max_time_us,
+                max_time_ns: max_time_ns,
+                total_time_ms: total_duration_ms,
+                total_time_us: total_duration_us,
+                total_time_ns: total_duration_ns,
                 memory_usage_bytes: memory_after.saturating_sub(memory_before),
                 throughput_comparisons_per_sec: throughput,
             });
@@ -766,9 +804,20 @@ fn run_benchmark(num_tests: usize) {
     
     for result in &benchmark_results {
         println!("Method: {} (chunk size: {})", result.method, result.chunk_size);
-        println!("  Average time: {:.2} ms", result.avg_time_ms);
-        println!("  Min/Max time: {} ms / {} ms", result.min_time_ms, result.max_time_ms);
-        println!("  Total time: {} ms", result.total_time_ms);
+        
+        // Choose best unit for display based on timing
+        if result.avg_time_ms >= 1.0 {
+            println!("  Average time: {:.3} ms ({:.1} μs, {:.0} ns)", result.avg_time_ms, result.avg_time_us, result.avg_time_ns);
+            println!("  Min/Max time: {} ms / {} ms", result.min_time_ms, result.max_time_ms);
+        } else if result.avg_time_us >= 1.0 {
+            println!("  Average time: {:.3} μs ({:.3} ms, {:.0} ns)", result.avg_time_us, result.avg_time_ms, result.avg_time_ns);
+            println!("  Min/Max time: {} μs / {} μs", result.min_time_us, result.max_time_us);
+        } else {
+            println!("  Average time: {:.0} ns ({:.3} μs, {:.3} ms)", result.avg_time_ns, result.avg_time_us, result.avg_time_ms);
+            println!("  Min/Max time: {} ns / {} ns", result.min_time_ns, result.max_time_ns);
+        }
+        
+        println!("  Total time: {} ms ({} μs, {} ns)", result.total_time_ms, result.total_time_us, result.total_time_ns);
         println!("  Memory usage: {} bytes ({:.2} KB)", result.memory_usage_bytes, result.memory_usage_bytes as f64 / 1024.0);
         println!("  Throughput: {:.2} comparisons/sec", result.throughput_comparisons_per_sec);
         println!();
@@ -781,12 +830,23 @@ fn run_benchmark(num_tests: usize) {
         let tree_result = benchmark_results.iter().find(|r| r.method == "merkle_tree" && r.chunk_size == chunk_size);
         
         if let (Some(lite), Some(tree)) = (lite_result, tree_result) {
-            let speed_ratio = lite.avg_time_ms / tree.avg_time_ms;
+            let speed_ratio = if tree.avg_time_ms > 0.0 { 
+                lite.avg_time_ms / tree.avg_time_ms 
+            } else { 
+                1.0 
+            };
             let winner = if lite.avg_time_ms < tree.avg_time_ms { "Merkle Lite" } else { "Merkle Tree" };
             
             println!("Chunk Size {}: {} is {:.2}x faster", chunk_size, winner, speed_ratio.max(1.0 / speed_ratio));
-            println!("  Merkle Lite: {:.2} ms avg, {:.2} comparisons/sec", lite.avg_time_ms, lite.throughput_comparisons_per_sec);
-            println!("  Merkle Tree: {:.2} ms avg, {:.2} comparisons/sec", tree.avg_time_ms, tree.throughput_comparisons_per_sec);
+            
+            // Show timing in most appropriate unit
+            if lite.avg_time_ms >= 1.0 {
+                println!("  Merkle Lite: {:.3} ms avg, {:.2} comparisons/sec", lite.avg_time_ms, lite.throughput_comparisons_per_sec);
+                println!("  Merkle Tree: {:.3} ms avg, {:.2} comparisons/sec", tree.avg_time_ms, tree.throughput_comparisons_per_sec);
+            } else {
+                println!("  Merkle Lite: {:.1} μs avg, {:.2} comparisons/sec", lite.avg_time_us, lite.throughput_comparisons_per_sec);
+                println!("  Merkle Tree: {:.1} μs avg, {:.2} comparisons/sec", tree.avg_time_us, tree.throughput_comparisons_per_sec);
+            }
             println!();
         }
     }
@@ -1006,13 +1066,21 @@ fn main() {
                     std::process::exit(1);
                 });
                 
-                let (percent, total_a, total_b, common, different, duration, line_diffs) = 
+                let (percent, total_a, total_b, common, different, duration_ms, duration_us, duration_ns, line_diffs) = 
                     compare_with_line_diffs(&content1, &content2, chunk_size, false);
                 
                 println!("=== LINE DIFF ANALYSIS ===");
                 println!("Files: {} vs {}", file1, file2);
                 println!("Overall difference: {:.2}%", percent);
-                println!("Processing time: {} ms", duration);
+                
+                // Display timing in most appropriate unit
+                if duration_ms >= 1 {
+                    println!("Processing time: {} ms ({} μs, {} ns)", duration_ms, duration_us, duration_ns);
+                } else if duration_us >= 1 {
+                    println!("Processing time: {} μs ({} ms, {} ns)", duration_us, duration_ms, duration_ns);
+                } else {
+                    println!("Processing time: {} ns ({} μs, {} ms)", duration_ns, duration_us, duration_ms);
+                }
                 println!("Total chunks: {} vs {}", total_a, total_b);
                 println!("Common chunks: {}, Different chunks: {}", common, different);
                 println!();
@@ -1047,7 +1115,9 @@ fn main() {
                     common_chunks: common,
                     different_chunks: different,
                     method: "merkle_lite_with_lines".to_string(),
-                    processing_time_ms: duration,
+                    processing_time_ms: duration_ms,
+                    processing_time_us: duration_us,
+                    processing_time_ns: duration_ns,
                     line_diffs,
                 };
                 
