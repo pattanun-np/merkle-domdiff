@@ -1,0 +1,9 @@
+[package]
+name = "merkle-domdiff"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hex = "0.4.3"
+regex = "1.11.1"
+sha2 = "0.10.9"
